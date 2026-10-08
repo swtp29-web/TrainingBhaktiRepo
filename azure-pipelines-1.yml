@@ -1,0 +1,51 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  projectPath: 'sampleapp/sampleapp.csproj'
+  publishPath: '$(Build.ArtifactStagingDirectory)/publish'
+
+steps:
+
+# 1. Install/select .NET SDK
+- task: UseDotNet@2
+  displayName: 'Install .NET SDK'
+  inputs:
+    packageType: 'sdk'
+    version: '8.x'
+
+# 2. Restore
+- task: DotNetCoreCLI@2
+  displayName: 'Restore'
+  inputs:
+    command: 'restore'
+    projects: '$(projectPath)'
+
+# 3. Build
+- task: DotNetCoreCLI@2
+  displayName: 'Build'
+  inputs:
+    command: 'build'
+    projects: '$(projectPath)'
+    arguments: '--configuration $(buildConfiguration) --no-restore'
+
+# 4. Publish
+- task: DotNetCoreCLI@2
+  displayName: 'Publish'
+  inputs:
+    command: 'publish'
+    projects: '$(projectPath)'
+    arguments: '--configuration $(buildConfiguration) --output $(publishPath) --no-build'
+    zipAfterPublish: false
+
+# 5. Publish pipeline artifact
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact'
+  inputs:
+    PathtoPublish: '$(publishPath)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
